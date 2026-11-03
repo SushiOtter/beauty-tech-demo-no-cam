@@ -5,7 +5,7 @@ import { initializeEventEngine } from "./events.js?v=33";
 import { initializeAdmin } from "./admin.js?v=44";
 import { detectionCapabilities } from "./detection.js";
 import { $ } from "./utils.js";
-import { initializeMediaControls } from "./media.js?v=40";
+import { initializeMediaControls } from "./media.js?v=41";
 import { initializeKiosk } from "./kiosk.js?v=8";
 import { preloadCameraDetector } from "./camera.js?v=37";
 import { isSupabaseConfigured, listVideoSections } from "./supabase.js?v=2";
