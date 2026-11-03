@@ -2,12 +2,10 @@ import { appState, stationStates } from "./state.js";
 import { createRemoteStation, loadConfiguration, renderConfigs } from "./configuration.js?v=38";
 import { renderDevices } from "./panels.js?v=33";
 import { initializeEventEngine } from "./events.js?v=33";
-import { initializeAdmin } from "./admin.js?v=44";
-import { detectionCapabilities } from "./detection.js";
+import { initializeAdmin } from "./admin.js?v=45";
 import { $ } from "./utils.js";
-import { initializeMediaControls } from "./media.js?v=41";
-import { initializeKiosk } from "./kiosk.js?v=8";
-import { preloadCameraDetector } from "./camera.js?v=37";
+import { initializeMediaControls } from "./media.js?v=42";
+import { initializeKiosk } from "./kiosk.js?v=9";
 import { isSupabaseConfigured, listVideoSections } from "./supabase.js?v=2";
 
 function addRemoteSections(sections) {
@@ -49,9 +47,7 @@ async function boot() {
       : isSupabaseConfigured() ? "" : "Conecta Supabase para compartir secciones entre dispositivos."
   });
   initializeKiosk();
-  preloadCameraDetector();
   $("#system-status").textContent = "Sistema preparado";
-  console.info("Capacidades del prototipo:", detectionCapabilities);
   if (isSupabaseConfigured() && sectionCatalogAvailable) {
     window.setInterval(async () => {
       try {

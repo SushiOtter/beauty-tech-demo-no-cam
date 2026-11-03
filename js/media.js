@@ -26,7 +26,7 @@ function currentStation() {
 
 function selectedLabel() {
   return selectedStationId === GLOBAL_VIDEO_SECTION_ID
-    ? "el vídeo de espera global"
+    ? "el vídeo común de respaldo"
     : currentStation()?.name || "esta sección";
 }
 
@@ -39,7 +39,7 @@ function renderVideoList(videos) {
   const host = $("#media-list");
   if (!videos.length) {
     host.innerHTML = selectedStationId === GLOBAL_VIDEO_SECTION_ID
-      ? '<p class="media-empty">Aún no hay vídeo de espera global.</p>'
+      ? '<p class="media-empty">Aún no hay vídeo común de respaldo.</p>'
       : '<p class="media-empty">Aún no hay vídeos en esta sección.</p>';
     return;
   }
@@ -78,10 +78,10 @@ function updateAdminControls() {
     !signedIn || (isGlobalVideo && visibleVideos.length > 0)
   );
   $("#media-upload-title").textContent = isGlobalVideo
-    ? "Añadir vídeo de espera para todas las secciones"
+    ? "Añadir vídeo común de respaldo"
     : "Añadir vídeos a esta sección";
   $("#media-upload-copy").textContent = isGlobalVideo
-    ? `Se reproduce en bucle mientras no se detecta presencia. Para cambiarlo, elimina el actual y sube otro. MP4, WebM u Ogg · máximo ${Math.round(MAX_VIDEO_BYTES / (1024 * 1024))} MB.`
+    ? `Se reproduce si la sección seleccionada no tiene vídeos. Para cambiarlo, elimina el actual y sube otro. MP4, WebM u Ogg · máximo ${Math.round(MAX_VIDEO_BYTES / (1024 * 1024))} MB.`
     : `Elige uno o varios archivos. MP4, WebM u Ogg · máximo ${Math.round(MAX_VIDEO_BYTES / (1024 * 1024))} MB por vídeo.`;
   renderVideoList(visibleVideos);
 }
@@ -90,7 +90,7 @@ function renderMediaStationOptions(select) {
   const selected = selectedStationId;
   select.innerHTML = [...appState.stations.values()]
     .map(station => `<option value="${escapeHTML(station.id)}">${escapeHTML(station.name)}</option>`)
-    .join("") + `<option value="${GLOBAL_VIDEO_SECTION_ID}">Vídeo de espera · todas las secciones</option>`;
+    .join("") + `<option value="${GLOBAL_VIDEO_SECTION_ID}">Vídeo común de respaldo</option>`;
   select.value = [...select.options].some(option => option.value === selected)
     ? selected
     : select.options[0]?.value || "";
@@ -152,7 +152,7 @@ async function handleDeleteSection() {
   const videoWarning = videoCount
     ? ` También se eliminarán permanentemente sus ${videoCount} vídeo(s).`
     : "";
-  if (!window.confirm(`¿Eliminar la sección «${station.name}»?${videoWarning} El vídeo de espera global no se verá afectado.`)) return;
+  if (!window.confirm(`¿Eliminar la sección «${station.name}»?${videoWarning} El vídeo común de respaldo no se verá afectado.`)) return;
 
   const button = $("#media-delete-section");
   button.disabled = true;
@@ -166,7 +166,7 @@ async function handleDeleteSection() {
     window.dispatchEvent(new CustomEvent("beautytech:sections-changed"));
     $("#media-create-section-form").hidden = true;
     updateAdminControls();
-    $("#media-status").textContent = `Se eliminó «${station.name}» y ${result.videoCount} vídeo(s). El vídeo de espera global sigue disponible.`;
+    $("#media-status").textContent = `Se eliminó «${station.name}» y ${result.videoCount} vídeo(s). El vídeo común de respaldo sigue disponible.`;
     $("#media-section-status").textContent = `Sección «${station.name}» eliminada.`;
   } catch (error) {
     $("#media-section-status").textContent = `No se pudo eliminar la sección: ${error.message}`;
@@ -241,7 +241,7 @@ async function uploadFiles(files) {
   const station = currentStation();
   if ((!station && selectedStationId !== GLOBAL_VIDEO_SECTION_ID) || !files.length) return;
   if (selectedStationId === GLOBAL_VIDEO_SECTION_ID && visibleVideos.length) {
-    $("#media-status").textContent = "Elimina el vídeo de espera actual antes de subir otro.";
+    $("#media-status").textContent = "Elimina el vídeo común actual antes de subir otro.";
     return;
   }
   const sectionId = selectedStationId;

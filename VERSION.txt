@@ -1,2 +1,2 @@
-Beauty Tech v37
-Biblioteca Supabase y reproducción de tablet por presencia
+Beauty Tech v39
+Biblioteca Supabase y reproducción automática de vídeos sin cámara ni detección

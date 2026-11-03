@@ -6,7 +6,7 @@ Los 25 pósteres JPG de `assets/videos/age-recommendations/` son ilustraciones g
 
 Inter y Cormorant Garamond se sirven desde WOFF2 locales en `assets/fonts/`; sus licencias SIL OFL están incluidas junto a los archivos. Los iconos de `assets/icons/` son SVG originales del proyecto.
 
-## Detector local de presencia
+## Recursos heredados de detección (no se usan)
 
 | Recurso | Versión | Licencia | Copia incluida |
 |---|---|---|---|
@@ -14,8 +14,8 @@ Inter y Cormorant Garamond se sirven desde WOFF2 locales en `assets/fonts/`; sus
 | TensorFlow.js incluido en el bundle | 4.22.0 | Apache-2.0 | `vendor/face-api/TENSORFLOW-LICENSE` |
 | TinyFaceDetector y sus pesos | Incluidos en 1.7.15 | MIT | `models/face-api/` |
 
-El modo tablet carga el detector de presencia local. No carga los antiguos pesos de estimación de edad ni envía imágenes de cámara al PC.
+Estos recursos se conservan en el repositorio de origen por sus licencias, pero la aplicación actual no carga el detector, no accede a cámaras y no realiza detección.
 
 ## Vídeos que se añadan
 
-Quien suba un vídeo debe contar con permiso para su uso y exhibición en tienda. Los vídeos no se incluyen en el código fuente: se almacenan en la base de datos local del servidor y en su carpeta de medios.
+Quien suba un vídeo debe contar con permiso para su uso y exhibición en tienda. Los vídeos no se incluyen en el código fuente: se administran desde la biblioteca de vídeos configurada para la tienda.

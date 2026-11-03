@@ -1,6 +1,5 @@
 import { appState } from "./state.js";
 import { $ } from "./utils.js";
-import { startCamera, stopCamera } from "./camera.js?v=37";
 import { listVideos } from "./supabase.js?v=2";
 import { GLOBAL_VIDEO_SECTION_ID } from "./supabase-config.js?v=38";
 
@@ -8,31 +7,13 @@ let activeStationId = "";
 let playlist = [];
 let playlistCursor = 0;
 let activeVideoIndex = -1;
-let presenceActive = false;
+let playbackActive = false;
 let failedVideoIndexes = new Set();
-let idlePlaylist = [];
-
-function playAttractVideo() {
-  const video = $("#kiosk-attract-video");
-  const idleVideo = idlePlaylist[0] || playlist[0];
-  if (!idleVideo) return;
-  video.src = idleVideo.url;
-  video.loop = true;
-  video.load();
-  video.play().catch(error => {
-    console.warn("No se pudo reproducir el vídeo de espera de la tablet:", error);
-  });
-}
-
-function stopAttractVideo() {
-  const video = $("#kiosk-attract-video");
-  video.pause();
-}
+let fallbackPlaylist = [];
 
 function showVideo(index) {
   const video = $("#kiosk-video");
-  if (!presenceActive || !playlist.length) return;
-  stopAttractVideo();
+  if (!playbackActive || !playlist.length) return;
   const videoIndex = index % playlist.length;
   activeVideoIndex = videoIndex;
   const media = playlist[videoIndex];
@@ -43,7 +24,9 @@ function showVideo(index) {
   $("#kiosk-player").hidden = false;
   $("#kiosk-attract").hidden = true;
   video.play().then(() => {
-    if (presenceActive && activeVideoIndex === videoIndex) $("#kiosk-camera-status").textContent = "Vídeo de la sección en reproducción.";
+    if (playbackActive && activeVideoIndex === videoIndex) {
+      $("#kiosk-playback-status").textContent = `Reproduciendo ${videoIndex + 1} de ${playlist.length}: ${media.name}`;
+    }
   }, error => {
     handleVideoFailure(videoIndex, error);
   });
@@ -58,7 +41,7 @@ function nextPlayableIndex(startIndex) {
 }
 
 function handleVideoFailure(index, error) {
-  if (!presenceActive || index !== activeVideoIndex || failedVideoIndexes.has(index)) return;
+  if (!playbackActive || index !== activeVideoIndex || failedVideoIndexes.has(index)) return;
   console.error("No se pudo reproducir el vídeo de la tablet:", error);
   failedVideoIndexes.add(index);
   const nextIndex = nextPlayableIndex(playlistCursor);
@@ -66,14 +49,13 @@ function handleVideoFailure(index, error) {
     showVideo(nextIndex);
     return;
   }
-  presenceActive = false;
+  playbackActive = false;
   const video = $("#kiosk-video");
   video.pause();
   video.currentTime = 0;
   $("#kiosk-player").hidden = true;
   $("#kiosk-attract").hidden = false;
-  playAttractVideo();
-  $("#kiosk-camera-status").textContent = "No se pudieron reproducir los vídeos. La cámara sigue detectando presencia.";
+  $("#kiosk-playback-status").textContent = "No se pudieron reproducir los vídeos de esta sección.";
 }
 
 async function loadPlaylist(station) {
@@ -85,9 +67,9 @@ async function loadPlaylist(station) {
     $("#kiosk-library-status").textContent = playlist.length
       ? `${playlist.length} vídeo(s) disponibles en esta sección.`
       : "Esta sección todavía no tiene vídeos subidos.";
-    $("#kiosk-presence-prompt").textContent = playlist.length
-      ? "Acércate para ver nuestros productos"
-      : "Añade vídeos a esta sección desde la administración del PC";
+    $("#kiosk-prompt").textContent = playlist.length
+      ? "Los vídeos se reproducen automáticamente, uno tras otro"
+      : "Añade vídeos a esta sección desde Administración";
     playlistCursor = 0;
     activeVideoIndex = -1;
     failedVideoIndexes = new Set();
@@ -95,21 +77,21 @@ async function loadPlaylist(station) {
   } catch (error) {
     console.error("No se pudo consultar la biblioteca de vídeos del PC:", error);
     $("#kiosk-library-status").textContent = "No se pudo conectar con la biblioteca de Supabase.";
-    $("#kiosk-presence-prompt").textContent = "Comprueba la conexión con la biblioteca online";
+    $("#kiosk-prompt").textContent = "Comprueba la conexión con la biblioteca online";
     playlist = [];
     failedVideoIndexes = new Set();
     return false;
   }
 }
 
-async function loadIdleVideo() {
+async function loadFallbackVideo() {
   try {
-    idlePlaylist = await listVideos(GLOBAL_VIDEO_SECTION_ID);
-    return idlePlaylist.length > 0;
+    fallbackPlaylist = await listVideos(GLOBAL_VIDEO_SECTION_ID);
+    return fallbackPlaylist.length > 0;
   } catch (error) {
-    console.error("No se pudo consultar el vídeo de espera global:", error);
-    idlePlaylist = [];
-    $("#kiosk-library-status").textContent = "No se pudo cargar el vídeo de espera global; se usará el vídeo de esta sección si está disponible.";
+    console.error("No se pudo consultar el vídeo común:", error);
+    fallbackPlaylist = [];
+    $("#kiosk-library-status").textContent = "No se pudo cargar el vídeo común.";
     return false;
   }
 }
@@ -125,13 +107,13 @@ async function startKiosk(stationId) {
   playlistCursor = 0;
   activeVideoIndex = -1;
   failedVideoIndexes = new Set();
-  presenceActive = false;
+  playbackActive = false;
   appState.kioskMode = true;
   appState.mode = "public";
   appState.presentationMode = false;
   appState.presentationStationId = stationId;
   appState.returnToWorker = true;
-  $("#camera-station").value = stationId;
+  $("#experience-station").value = stationId;
   $("#worker-view").hidden = true;
   $("#admin-view").hidden = true;
   $("#public-view").hidden = false;
@@ -142,36 +124,33 @@ async function startKiosk(stationId) {
   $("#kiosk-player").hidden = true;
   $("#kiosk-category").textContent = station.name;
   $("#kiosk-copy").textContent = station.copy || "Descubre nuestros productos y novedades.";
-  $("#kiosk-camera-status").textContent = "Solicitando permiso para detectar presencia en este dispositivo…";
-  $("#kiosk-manual-start").hidden = true;
+  $("#kiosk-playback-status").textContent = "Cargando los vídeos de la sección…";
   document.body.classList.add("tablet-mode");
   const hasVideos = await loadPlaylist(station);
-  const hasIdleVideo = await loadIdleVideo();
+  const hasFallbackVideo = hasVideos ? false : await loadFallbackVideo();
   if (!appState.kioskMode || activeStationId !== stationId) return;
-  playAttractVideo();
-  if (!hasVideos && !hasIdleVideo) {
-    $("#kiosk-camera-status").textContent = "La tablet está en espera. Añade un vídeo de espera global o vídeos a esta sección desde Administración.";
+  if (!hasVideos && hasFallbackVideo) {
+    playlist = fallbackPlaylist.map(video => ({ name: video.name, url: video.url }));
+    $("#kiosk-library-status").textContent = "No hay vídeos en esta sección; se reproduce el vídeo común.";
+  }
+  if (!playlist.length) {
+    $("#kiosk-playback-status").textContent = "No hay vídeos para reproducir. Sube vídeos a esta sección desde Administración.";
+    $("#kiosk-prompt").textContent = "Añade vídeos a esta sección desde Administración";
     return;
   }
-  const cameraReady = await startCamera();
-  if (!appState.kioskMode || activeStationId !== stationId) return;
-  if (!cameraReady && hasVideos) {
-    $("#kiosk-manual-start").hidden = false;
-    $("#kiosk-manual-start").focus();
-  } else if (!cameraReady) {
-    $("#kiosk-camera-status").textContent = "El vídeo de espera sigue reproduciéndose, pero no se pudo activar la detección de presencia.";
-  }
+  playbackActive = true;
+  $("#kiosk-player").hidden = false;
+  $("#kiosk-attract").hidden = true;
+  showVideo(0);
 }
 
 function stopKiosk() {
-  presenceActive = false;
+  playbackActive = false;
   appState.kioskMode = false;
-  stopCamera();
   const video = $("#kiosk-video");
   video.pause();
   video.removeAttribute("src");
   video.load();
-  stopAttractVideo();
   $("#tablet-kiosk").hidden = true;
   $("#public-view").hidden = true;
   $("#worker-view").hidden = false;
@@ -183,38 +162,9 @@ function stopKiosk() {
   appState.presentationStationId = "";
   activeStationId = "";
   playlist = [];
-  idlePlaylist = [];
+  fallbackPlaylist = [];
   failedVideoIndexes = new Set();
   $("#worker-start")?.focus();
-}
-
-function beginPresence() {
-  if (!appState.kioskMode || !activeStationId || presenceActive) return;
-  if (!playlist.length) {
-    $("#kiosk-camera-status").textContent = "Presencia detectada, pero esta sección todavía no tiene vídeos disponibles.";
-    return;
-  }
-  presenceActive = true;
-  playlistCursor = 0;
-  activeVideoIndex = -1;
-  failedVideoIndexes = new Set();
-  $("#kiosk-camera-status").textContent = "Presencia detectada. Reproduciendo contenido de la sección.";
-  showVideo(playlistCursor);
-}
-
-function endPresence() {
-  if (!presenceActive) return;
-  presenceActive = false;
-  const video = $("#kiosk-video");
-  video.pause();
-  video.currentTime = 0;
-  $("#kiosk-player").hidden = true;
-  $("#kiosk-attract").hidden = false;
-  playAttractVideo();
-  playlistCursor = 0;
-  activeVideoIndex = -1;
-  failedVideoIndexes = new Set();
-  $("#kiosk-camera-status").textContent = "Esperando a la siguiente persona. El detector local sigue activo.";
 }
 
 export function initializeKiosk() {
@@ -222,25 +172,14 @@ export function initializeKiosk() {
     void startKiosk(event.detail?.stationId);
   });
   window.addEventListener("beautytech:kiosk-stop-requested", stopKiosk);
-  window.addEventListener("beautytech:presence-detected", beginPresence);
-  window.addEventListener("beautytech:presence-lost", endPresence);
   $("#kiosk-video").addEventListener("ended", () => {
-    if (!presenceActive || activeVideoIndex < 0) return;
+    if (!playbackActive || activeVideoIndex < 0) return;
     const nextIndex = nextPlayableIndex(playlistCursor);
     if (nextIndex >= 0) showVideo(nextIndex);
   });
   $("#kiosk-video").addEventListener("error", () => {
-    if (!presenceActive || !playlist.length) return;
+    if (!playbackActive || !playlist.length) return;
     handleVideoFailure(activeVideoIndex, new Error("Error de carga o reproducción del vídeo."));
-  });
-  $("#kiosk-manual-start").addEventListener("click", () => {
-    if (!playlist.length || presenceActive) return;
-    presenceActive = true;
-    playlistCursor = 0;
-    activeVideoIndex = -1;
-    failedVideoIndexes = new Set();
-    $("#kiosk-camera-status").textContent = "Modo sin cámara: contenido iniciado manualmente.";
-    showVideo(playlistCursor);
   });
   $("#kiosk-stop").addEventListener("click", stopKiosk);
 }

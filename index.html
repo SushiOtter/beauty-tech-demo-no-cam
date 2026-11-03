@@ -51,63 +51,12 @@
       <div class="worker-action-bar">
         <div class="worker-action-note">
           <span class="worker-action-icon" aria-hidden="true">✦</span>
-          <span><strong id="worker-selected-station">Aparatología</strong><small>La cámara solo detecta presencia; no guarda imágenes.</small></span>
+          <span><strong id="worker-selected-station">Aparatología</strong><small>Los vídeos se reproducen automáticamente, sin cámara.</small></span>
         </div>
-        <button class="button button-primary" id="worker-start" type="button">Empezar experiencia <span aria-hidden="true">→</span></button>
+        <button class="button button-primary" id="worker-start" type="button">Reproducir vídeos <span aria-hidden="true">→</span></button>
       </div>
       <label class="visually-hidden" for="worker-station">Sección seleccionada</label>
       <select id="worker-station" class="visually-hidden" aria-label="Sección seleccionada"></select>
-    </section>
-
-    <section id="camera-consent-view" class="worker-view camera-flow-view" aria-labelledby="camera-consent-title" hidden>
-      <p class="eyebrow">VÍDEO DE LA SECCIÓN · PRIVACIDAD</p>
-      <h1 id="camera-consent-title">Descubre esta sección.<br><em>Tú decides.</em></h1>
-      <p class="worker-copy">La cámara detecta únicamente presencia para iniciar los vídeos de esta sección. No identifica a las personas ni estima la edad.</p>
-      <div class="privacy-card">
-        <strong>Procesamiento local en este dispositivo</strong>
-        <ul>
-          <li>La cámara se activa al iniciar la experiencia; el detector funciona aquí y no graba ni guarda imágenes.</li>
-          <li>Al alejarte, el vídeo continúa. Si pasan 15 segundos sin detectar presencia, vuelve al vídeo de espera.</li>
-          <li>Si no aceptas, puedes continuar sin cámara con contenido para todas las edades.</li>
-        </ul>
-      </div>
-      <div class="worker-flow-actions">
-        <button class="button button-primary" id="camera-consent-accept" type="button">Aceptar y comenzar</button>
-        <button class="button button-secondary" id="camera-consent-decline" type="button">Seguir sin cámara</button>
-        <button class="button button-quiet" id="camera-consent-cancel" type="button">Volver</button>
-      </div>
-      <p class="worker-note">La cámara no reconoce identidades ni estima datos personales.</p>
-    </section>
-
-    <section id="scan-view" class="scan-view" aria-label="Escaneo facial local" hidden>
-      <video id="scan-camera-preview" class="scan-camera-preview" muted playsinline aria-label="Vista de la cámara"></video>
-      <canvas id="scan-camera-overlay" class="scan-camera-overlay" aria-hidden="true"></canvas>
-      <div class="scan-shade" aria-hidden="true"></div>
-      <div class="scan-guide" aria-hidden="true"><span></span></div>
-      <div class="scan-copy">
-        <p class="eyebrow">PROCESAMIENTO LOCAL · PRIVACIDAD PRIMERO</p>
-        <h2>Encuentra tu luz.</h2>
-        <p id="scan-status" role="status" aria-live="polite">Buscando un solo rostro…</p>
-        <progress id="scan-progress" max="10" value="0" aria-label="Lecturas de edad"></progress>
-        <small id="scan-progress-label">0 de 10 lecturas · máximo 20 segundos</small>
-        <div class="scan-actions">
-          <button class="button button-secondary" id="scan-cancel" type="button">Cancelar</button>
-          <button class="button button-primary" id="scan-without-camera" type="button">Continuar sin cámara</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="camera-error-view" class="worker-view camera-flow-view" aria-labelledby="camera-error-title" hidden>
-      <p class="eyebrow">CÁMARA NO DISPONIBLE</p>
-      <h1 id="camera-error-title">No se ha iniciado<br><em>la detección.</em></h1>
-      <p class="worker-copy" id="camera-error-copy" role="status" aria-live="polite">No se ha concedido acceso a la cámara.</p>
-      <div class="worker-flow-actions">
-        <button class="button button-primary" id="camera-error-retry" type="button">Volver a intentar</button>
-        <button class="button button-secondary" id="camera-error-no-camera" type="button">Continuar sin cámara</button>
-        <button class="button button-secondary" id="camera-error-demo" type="button">Probar demostración sin cámara</button>
-        <button class="button button-quiet" id="camera-error-home" type="button">Volver al inicio</button>
-      </div>
-      <p class="worker-note">La demostración sin cámara está identificada como simulación y no estima edad ni detecta presencia.</p>
     </section>
 
     <section id="admin-view" class="admin-view" aria-labelledby="admin-title" hidden>
@@ -124,13 +73,13 @@
         <div>
           <p class="eyebrow">MODO PRESENTACIÓN</p>
           <h2 id="quick-start-title">Activa una experiencia automática</h2>
-          <p>Elige la sección y pulsa iniciar. La tablet reproduce sus vídeos al detectar presencia y vuelve al vídeo de espera tras 15 segundos sin detectar a nadie.</p>
+          <p>Elige una sección y pulsa iniciar. Sus vídeos se reproducen en orden y vuelven al primero al terminar la lista.</p>
         </div>
         <div class="quick-start-actions">
-          <label class="media-field" for="camera-station">Sección
-            <select id="camera-station" class="field-select"></select>
+          <label class="media-field" for="experience-station">Sección
+            <select id="experience-station" class="field-select"></select>
           </label>
-          <button class="button button-primary" id="start-section-experience" type="button">Iniciar experiencia</button>
+          <button class="button button-primary" id="start-section-experience" type="button">Reproducir vídeos</button>
         </div>
       </section>
 
@@ -139,7 +88,7 @@
         <div><p class="eyebrow">BIBLIOTECA ONLINE</p><h2 id="media-title">Vídeos por sección</h2></div>
         <span class="subtle-label">Supabase · acceso para tablets</span>
         </div>
-        <p class="vision-copy">Sube vídeos por sección y un vídeo de espera compartido por todas las secciones a la biblioteca online de Supabase. La tablet muestra el vídeo de espera hasta detectar presencia y, entonces, reproduce el contenido de la sección seleccionada. Inicia sesión para cargar o eliminar archivos; MP4, WebM u Ogg · hasta 50 MB por vídeo.</p>
+        <p class="vision-copy">Sube vídeos por sección a la biblioteca online de Supabase. La tablet reproduce cada lista automáticamente, en orden y en bucle, sin cámara ni detección. Inicia sesión para cargar o eliminar archivos; MP4, WebM u Ogg · hasta 50 MB por vídeo.</p>
         <div class="media-controls">
           <label class="media-field" for="media-station">Estación
             <select id="media-station" class="field-select"></select>
@@ -168,29 +117,10 @@
 
       <section class="vision-panel" aria-labelledby="vision-title">
         <div class="section-heading">
-          <div><p class="eyebrow">CONFIGURACIÓN AVANZADA</p><h2 id="vision-title">Detección de presencia</h2></div>
-          <span class="subtle-label">Procesamiento en este dispositivo</span>
+          <div><p class="eyebrow">MODO DE REPRODUCCIÓN</p><h2 id="vision-title">Sin cámara ni detección</h2></div>
+          <span class="subtle-label">Reproducción automática</span>
         </div>
-        <p class="vision-copy">La cámara solo busca un rostro para detectar presencia y activar el vídeo de la sección. No se estima la edad, no se identifica a nadie y las imágenes no salen de la tablet.</p>
-        <div class="zone-config" id="zone-config" aria-label="Asignación de zonas a estaciones">
-          <p class="zone-config-title">Asigna cada zona de la cámara a una estación</p>
-          <div class="zone-selects" id="zone-selects"></div>
-          <small>Importante: coloca la cámara de forma que las estaciones se vean de izquierda a derecha. La imagen de vista previa está espejada, como un espejo.</small>
-        </div>
-        <div class="vision-controls">
-          <div class="vision-actions">
-            <button class="button button-secondary" id="camera-start" type="button">Activar cámara</button>
-            <button class="button button-quiet" id="camera-stop" type="button" disabled>Detener cámara</button>
-          </div>
-          <label class="confidence-control" for="camera-confidence">Sensibilidad <output id="camera-confidence-value" for="camera-confidence">20%</output><input id="camera-confidence" type="range" min="0.2" max="0.9" step="0.05" value="0.2"></label>
-        </div>
-        <div class="vision-feedback">
-          <div class="camera-stage">
-            <video id="camera-preview" class="camera-preview" muted playsinline aria-label="Vista previa de la cámara"></video>
-            <canvas id="camera-overlay" class="camera-overlay" aria-hidden="true"></canvas>
-          </div>
-          <div class="vision-status-wrap"><span class="vision-status-dot" id="camera-status-dot"></span><p id="camera-status" role="status" aria-live="polite">Cámara apagada. No se está capturando imagen.</p><small id="camera-detail">El detector de presencia funciona en este navegador; no se guardan ni se envían imágenes.</small><div class="vision-metrics" aria-live="polite"><span>Modelo: <strong id="metric-model">Sin iniciar</strong></span><span>Confianza: <strong id="metric-confidence">—</strong></span><span>Inferencia: <strong id="metric-latency">—</strong></span><span>Zona: <strong id="metric-zone">—</strong></span><span>Última detección: <strong id="metric-last-detection">—</strong></span></div></div>
-        </div>
+        <p class="vision-copy">Al iniciar una sección, la tablet reproduce sus vídeos de principio a fin y vuelve al primero al acabar. No se solicita acceso a la cámara ni se detecta presencia.</p>
       </section>
 
       <section class="preview-section" aria-labelledby="preview-title">
@@ -200,7 +130,7 @@
         </div>
         <div id="device-grid" class="device-grid"></div>
       </section>
-      <p class="footnote">PROTOTIPO · Detección local de presencia · Sin estimación de edad ni reconocimiento de identidad.</p>
+      <p class="footnote">BEAUTY TECH · Vídeos en reproducción continua · Sin cámara ni detección.</p>
     </section>
 
     <section id="public-view" class="public-view" hidden aria-label="Modo público de las estaciones">
@@ -209,7 +139,6 @@
         <div class="public-header-actions"><div class="public-status"><i></i> <span id="public-mode-label">ESPERA DE PRESENCIA</span></div><button class="button button-secondary" id="guided-stop" type="button" hidden>Detener demostración</button></div>
       </div>
       <section id="tablet-kiosk" class="tablet-kiosk" aria-label="Experiencia de la tablet" hidden>
-        <video id="kiosk-camera-preview" class="kiosk-camera-preview" muted playsinline aria-hidden="true"></video>
         <header class="kiosk-header">
           <span class="brand-mark">B<span>T</span></span>
           <span class="kiosk-live"><i></i> EXPERIENCIA EN TIENDA</span>
@@ -217,11 +146,10 @@
         </header>
         <div class="kiosk-stage">
           <div id="kiosk-attract" class="kiosk-attract">
-            <video id="kiosk-attract-video" muted playsinline loop aria-hidden="true"></video>
             <p class="eyebrow">DESCUBRE ESTA SECCIÓN</p>
             <h1 id="kiosk-category"></h1>
             <p id="kiosk-copy"></p>
-            <span id="kiosk-presence-prompt" class="kiosk-prompt">Acércate para ver nuestros productos</span>
+            <span id="kiosk-prompt" class="kiosk-prompt">Los vídeos se reproducen automáticamente</span>
           </div>
           <div id="kiosk-player" class="kiosk-player" hidden>
             <video id="kiosk-video" muted playsinline autoplay aria-label="Vídeos de la sección"></video>
@@ -229,11 +157,10 @@
         </div>
         <footer class="kiosk-footer">
           <div>
-            <p id="kiosk-camera-status" role="status" aria-live="polite">Preparando el detector local…</p>
+            <p id="kiosk-playback-status" role="status" aria-live="polite">Preparando los vídeos…</p>
             <small id="kiosk-library-status">Conectando con la biblioteca online…</small>
           </div>
-          <p class="kiosk-privacy">Cámara local solo para detectar presencia · No se identifica a nadie ni se guardan imágenes</p>
-          <button id="kiosk-manual-start" class="button button-secondary" type="button" hidden>Mostrar contenido sin cámara</button>
+          <p class="kiosk-privacy">Reproducción automática · Sin cámara ni detección</p>
         </footer>
       </section>
       <section id="age-recommendation-panel" class="age-recommendation-panel" aria-live="polite" hidden>
@@ -254,10 +181,10 @@
       <aside id="kiosk-welcome-panel" class="kiosk-welcome-panel" aria-live="polite" hidden>
         <p class="eyebrow">ENCUENTRA TU PRÓXIMO RITUAL</p>
         <h2 id="kiosk-welcome-station">Tu experiencia empieza aquí</h2>
-        <p>Disfruta del vídeo de la sección. Si quieres sugerencias adaptadas, acepta el aviso de privacidad en pantalla.</p>
-        <div class="kiosk-local-badge"><span aria-hidden="true">✦</span> Todo se procesa en esta tablet</div>
+        <p>Disfruta de los vídeos seleccionados para esta sección.</p>
+        <div class="kiosk-local-badge"><span aria-hidden="true">✦</span> Reproducción sin cámara</div>
       </aside>
-      <p id="presentation-status" class="presentation-status" role="status" aria-live="polite">Preparando el detector local…</p>
+      <p id="presentation-status" class="presentation-status" role="status" aria-live="polite">Preparando la experiencia…</p>
       <div id="public-grid" class="device-grid public-grid"></div>
       <section id="guided-complete" class="guided-complete" aria-live="polite" hidden>
         <div><p class="eyebrow">RECORRIDO COMPLETADO</p><h2>La experiencia está lista para volver a empezar.</h2></div>
@@ -273,6 +200,6 @@
     <div id="station-player-content" class="station-player-content"></div>
   </div>
   <script src="js/bootstrap.js"></script>
-  <script type="module" src="js/main.js?v=52"></script>
+  <script type="module" src="js/main.js?v=53"></script>
 </body>
 </html>
