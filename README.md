@@ -25,7 +25,7 @@ La URL y la clave anon son públicas por diseño: la seguridad depende de las po
 
 ## Uso de la biblioteca
 
-- Incluye cinco secciones iniciales: aparatología, maquillaje, tratamientos capilares, novedades y color de pelo. Desde **Vídeos por sección**, la encargada puede añadir secciones compartidas; aparecen en las tablets conectadas en un máximo de 30 segundos y pueden seleccionarse al iniciar la experiencia.
+- Incluye cinco secciones iniciales: aparatología, maquillaje, tratamientos capilares, novedades y color de pelo. Desde **Vídeos por sección**, la encargada puede añadir secciones compartidas; aparecen en las tablets conectadas en un máximo de 30 segundos y pueden seleccionarse al iniciar la experiencia. También puede eliminar secciones añadidas y sus vídeos; las cinco iniciales y el único vídeo de espera global están protegidos.
 - La encargada puede subir y eliminar vídeos después de autenticarse con su cuenta de Supabase. Las tablets usan el vídeo de espera global mientras no detectan presencia y reproducen los vídeos de la sección seleccionada al detectar a alguien.
 - Si una sección no tiene vídeos pero sí hay vídeo de espera global, la tablet lo reproduce y mantiene activa la detección; al detectar presencia, avisa que faltan vídeos para esa sección. Si no hay ninguno de los dos, no activa la cámara. Cuando hay vídeos de sección, los reproduce al detectar presencia y vuelve al vídeo global tras 15 segundos sin detección.
 - La aplicación limita los archivos a 50 MB para que la prueba sea compatible con los límites habituales del plan gratuito. El plan de Supabase también puede imponer límites de tamaño, almacenamiento y transferencia.

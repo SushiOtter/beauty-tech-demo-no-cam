@@ -157,6 +157,48 @@ export async function createVideoSection(section) {
   return rows[0];
 }
 
+export async function deleteVideoSection(sectionId) {
+  if (!/^section-[a-z0-9-]+$/.test(sectionId)) {
+    throw new Error("Solo se pueden eliminar las secciones añadidas, no las secciones iniciales ni el vídeo de espera global.");
+  }
+  const session = await activeSession();
+  const pageSize = 500;
+  const storagePaths = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const params = new URLSearchParams({
+      select: "storage_path",
+      section_id: `eq.${sectionId}`,
+      order: "id.asc"
+    });
+    const videos = await request(`/rest/v1/videos?${params}`, {
+      headers: { Range: `${offset}-${offset + pageSize - 1}` }
+    });
+    storagePaths.push(...videos.map(video => video.storage_path));
+    if (videos.length < pageSize) break;
+  }
+
+  const storageBatchSize = 100;
+  for (let offset = 0; offset < storagePaths.length; offset += storageBatchSize) {
+    await request(`/storage/v1/object/${encodeURIComponent(SUPABASE_BUCKET)}`, {
+      method: "DELETE",
+      token: session.accessToken,
+      headers: { "Content-Type": "application/json" },
+      body: { prefixes: storagePaths.slice(offset, offset + storageBatchSize) }
+    });
+  }
+
+  const sectionParams = new URLSearchParams({ id: `eq.${sectionId}` });
+  const deleted = await request(`/rest/v1/video_sections?${sectionParams}`, {
+    method: "DELETE",
+    token: session.accessToken,
+    headers: { Prefer: "return=representation" }
+  });
+  if (!deleted?.length) {
+    throw new Error("Supabase no eliminó la sección. Comprueba los permisos y que ejecutaste el SQL actualizado.");
+  }
+  return { videoCount: storagePaths.length };
+}
+
 export async function listVideos(sectionId) {
   const params = new URLSearchParams({
     select: "id,section_id,name,storage_path,mime_type,size_bytes,created_at",

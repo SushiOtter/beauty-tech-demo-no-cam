@@ -5,6 +5,7 @@ import { createRemoteStation, renderConfigs } from "./configuration.js?v=38";
 import { GLOBAL_VIDEO_SECTION_ID, MAX_VIDEO_BYTES } from "./supabase-config.js?v=38";
 import {
   createVideoSection,
+  deleteVideoSection,
   deleteVideo,
   hasAdminSession,
   isSupabaseConfigured,
@@ -64,6 +65,8 @@ function updateAdminControls() {
   $("#media-login-form").hidden = signedIn;
   $("#media-logout").hidden = !signedIn;
   $("#media-add-section").disabled = !signedIn;
+  const selectedStation = appState.stations.get(selectedStationId);
+  $("#media-delete-section").disabled = !signedIn || selectedStation?.remoteSection !== true;
   $("#media-section-status").textContent = sectionCatalogError || (signedIn
     ? "Las secciones nuevas se compartirán con las tablets conectadas."
     : "Inicia sesión para añadir secciones o gestionar vídeos.");
@@ -137,6 +140,36 @@ async function handleCreateSection(event, select) {
     $("#media-section-status").textContent = `Sección «${station.name}» creada y compartida con las tablets.`;
   } catch (error) {
     $("#media-section-status").textContent = `No se pudo crear la sección: ${error.message}`;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleDeleteSection() {
+  const station = appState.stations.get(selectedStationId);
+  if (!hasAdminSession() || station?.remoteSection !== true) return;
+  const videoCount = visibleVideos.length;
+  const videoWarning = videoCount
+    ? ` También se eliminarán permanentemente sus ${videoCount} vídeo(s).`
+    : "";
+  if (!window.confirm(`¿Eliminar la sección «${station.name}»?${videoWarning} El vídeo de espera global no se verá afectado.`)) return;
+
+  const button = $("#media-delete-section");
+  button.disabled = true;
+  $("#media-section-status").textContent = `Eliminando «${station.name}» y sus vídeos…`;
+  try {
+    const result = await deleteVideoSection(station.id);
+    appState.stations.delete(station.id);
+    visibleVideos = [];
+    renderConfigs();
+    renderDevices();
+    window.dispatchEvent(new CustomEvent("beautytech:sections-changed"));
+    $("#media-create-section-form").hidden = true;
+    updateAdminControls();
+    $("#media-status").textContent = `Se eliminó «${station.name}» y ${result.videoCount} vídeo(s). El vídeo de espera global sigue disponible.`;
+    $("#media-section-status").textContent = `Sección «${station.name}» eliminada.`;
+  } catch (error) {
+    $("#media-section-status").textContent = `No se pudo eliminar la sección: ${error.message}`;
   } finally {
     button.disabled = false;
   }
@@ -274,6 +307,7 @@ export function initializeMediaControls({ sectionLoadError = "" } = {}) {
     <button id="media-logout" class="button button-quiet" type="button" hidden>Cerrar sesión</button>
     <div class="media-section-manager">
       <button id="media-add-section" class="button button-secondary" type="button" disabled>Añadir sección</button>
+      <button id="media-delete-section" class="button button-quiet" type="button" disabled>Eliminar sección seleccionada</button>
       <form id="media-create-section-form" class="media-create-section" hidden>
         <label for="media-section-name">Nombre de la nueva sección
           <input id="media-section-name" type="text" maxlength="48" autocomplete="off" required>
@@ -296,6 +330,7 @@ export function initializeMediaControls({ sectionLoadError = "" } = {}) {
     $("#media-section-name").focus();
   });
   $("#media-create-section-form").addEventListener("submit", event => void handleCreateSection(event, select));
+  $("#media-delete-section").addEventListener("click", () => void handleDeleteSection());
   $("#media-section-cancel").addEventListener("click", () => {
     $("#media-create-section-form").hidden = true;
     $("#media-section-name").value = "";
@@ -321,9 +356,9 @@ export function initializeMediaControls({ sectionLoadError = "" } = {}) {
   window.addEventListener("beautytech:sections-changed", () => {
     const previousStation = selectedStationId;
     renderMediaStationOptions(select);
+    updateAdminControls();
     if (selectedStationId === previousStation) return;
     visibleVideos = [];
-    updateAdminControls();
     void loadSelectedVideos();
   });
   $("#media-upload-files").addEventListener("change", event => {

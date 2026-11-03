@@ -31,7 +31,7 @@ alter table public.videos drop constraint if exists videos_section_id_check;
 alter table public.videos drop constraint if exists videos_section_id_allowed;
 alter table public.videos
   add constraint videos_section_id_allowed
-  foreign key (section_id) references public.video_sections (id);
+  foreign key (section_id) references public.video_sections (id) on delete cascade;
 
 create index if not exists videos_section_created_idx
   on public.videos (section_id, created_at);
@@ -40,7 +40,7 @@ alter table public.video_sections enable row level security;
 alter table public.videos enable row level security;
 
 grant select on public.video_sections to anon, authenticated;
-grant insert on public.video_sections to authenticated;
+grant insert, delete on public.video_sections to authenticated;
 grant select on public.videos to anon, authenticated;
 grant insert, delete on public.videos to authenticated;
 
@@ -55,6 +55,15 @@ create policy "Admins can add video sections"
   on public.video_sections for insert
   to authenticated
   with check ((auth.jwt() -> 'app_metadata' ->> 'beauty_admin') = 'true');
+
+drop policy if exists "Admins can delete video sections" on public.video_sections;
+create policy "Admins can delete video sections"
+  on public.video_sections for delete
+  to authenticated
+  using (
+    id not in ('apparatology', 'makeup', 'haircare', 'newness', 'haircolor', 'global')
+    and (auth.jwt() -> 'app_metadata' ->> 'beauty_admin') = 'true'
+  );
 
 drop policy if exists "Anyone can read video metadata" on public.videos;
 create policy "Anyone can read video metadata"
