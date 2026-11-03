@@ -7,7 +7,7 @@
 GitHub Pages publica la interfaz, pero no aloja una base de datos. Para la biblioteca online se usa Supabase: Postgres guarda el índice de los vídeos y Supabase Storage guarda los archivos. Este repositorio incluye el esquema y las políticas en [`supabase/setup.sql`](./supabase/setup.sql).
 
 1. Crea un proyecto en Supabase.
-2. En **SQL Editor**, pega y ejecuta el contenido de `supabase/setup.sql`. Crea o actualiza la tabla `videos`, añade la sección especial `global` para el vídeo de espera, activa Row Level Security, añade sus políticas y crea el bucket público `beauty-videos` con límite de 50 MB.
+2. En **SQL Editor**, pega y ejecuta el contenido de `supabase/setup.sql`. Si ya habías configurado Supabase, vuelve a ejecutar el script para crear el catálogo compartido de secciones. Crea o actualiza las tablas `video_sections` y `videos`, añade las secciones iniciales y la sección especial `global` para el vídeo de espera, activa Row Level Security, añade sus políticas y crea el bucket público `beauty-videos` con límite de 50 MB.
 3. En **Authentication → Providers → Email**, desactiva el registro público. En **Authentication → Users**, crea la cuenta de la encargada. En SQL Editor, sustituye el correo de este comando por el de esa cuenta y ejecútalo para concederle permisos de administración:
 
    ```sql
@@ -25,7 +25,7 @@ La URL y la clave anon son públicas por diseño: la seguridad depende de las po
 
 ## Uso de la biblioteca
 
-- Incluye cinco secciones: aparatología, maquillaje, tratamientos capilares, novedades y color de pelo.
+- Incluye cinco secciones iniciales: aparatología, maquillaje, tratamientos capilares, novedades y color de pelo. Desde **Vídeos por sección**, la encargada puede añadir secciones compartidas; aparecen en las tablets conectadas en un máximo de 30 segundos y pueden seleccionarse al iniciar la experiencia.
 - La encargada puede subir y eliminar vídeos después de autenticarse con su cuenta de Supabase. Las tablets usan el vídeo de espera global mientras no detectan presencia y reproducen los vídeos de la sección seleccionada al detectar a alguien.
 - Si una sección no tiene vídeos pero sí hay vídeo de espera global, la tablet lo reproduce y mantiene activa la detección; al detectar presencia, avisa que faltan vídeos para esa sección. Si no hay ninguno de los dos, no activa la cámara. Cuando hay vídeos de sección, los reproduce al detectar presencia y vuelve al vídeo global tras 15 segundos sin detección.
 - La aplicación limita los archivos a 50 MB para que la prueba sea compatible con los límites habituales del plan gratuito. El plan de Supabase también puede imponer límites de tamaño, almacenamiento y transferencia.

@@ -135,6 +135,28 @@ export function hasAdminSession() {
   return Boolean(adminSession);
 }
 
+export async function listVideoSections() {
+  const params = new URLSearchParams({
+    select: "id,name",
+    order: "name.asc"
+  });
+  return request(`/rest/v1/video_sections?${params}`);
+}
+
+export async function createVideoSection(section) {
+  const session = await activeSession();
+  const rows = await request("/rest/v1/video_sections", {
+    method: "POST",
+    token: session.accessToken,
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=representation"
+    },
+    body: section
+  });
+  return rows[0];
+}
+
 export async function listVideos(sectionId) {
   const params = new URLSearchParams({
     select: "id,section_id,name,storage_path,mime_type,size_bytes,created_at",

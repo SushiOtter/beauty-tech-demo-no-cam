@@ -19,6 +19,13 @@
 .media-password-toggle:hover { background: rgba(0,0,0,.05); color: var(--ink); }
 .media-password-toggle:focus-visible { outline: 2px solid var(--champagne); outline-offset: 1px; }
 .media-password-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.media-section-manager { display: grid; justify-items: start; gap: 8px; }
+.media-section-manager > .button { min-height: 44px; }
+.media-create-section { display: flex; width: min(100%, 680px); align-items: end; flex-wrap: wrap; gap: 10px; }
+.media-create-section[hidden] { display: none; }
+.media-create-section label { display: grid; flex: 1 1 220px; gap: 6px; color: var(--muted); font-size: 12px; }
+.media-create-section input { width: 100%; min-height: 44px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.65); color: var(--ink); }
+.media-section-status { margin: 0; color: var(--muted); font-size: 12px; }
 .media-upload {
   display: grid;
   gap: 8px;
@@ -92,6 +99,8 @@
 @media (max-width: 650px) {
   .media-admin-login { grid-template-columns: 1fr; }
   .media-admin-login p { grid-column: 1; }
+  .media-create-section { align-items: stretch; flex-direction: column; }
+  .media-create-section > .button { width: 100%; min-height: 44px; }
   .server-video { grid-template-columns: 1fr auto; }
   .server-video a { grid-column: 1; }
   .server-video button { grid-column: 2; grid-row: 1 / span 2; }

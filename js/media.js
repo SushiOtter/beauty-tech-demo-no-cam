@@ -1,8 +1,10 @@
 import { appState } from "./state.js";
 import { $, escapeHTML } from "./utils.js";
 import { renderDevices } from "./panels.js?v=33";
+import { createRemoteStation, renderConfigs } from "./configuration.js?v=38";
 import { GLOBAL_VIDEO_SECTION_ID, MAX_VIDEO_BYTES } from "./supabase-config.js?v=38";
 import {
+  createVideoSection,
   deleteVideo,
   hasAdminSession,
   isSupabaseConfigured,
@@ -10,10 +12,11 @@ import {
   signInAdmin,
   signOutAdmin,
   uploadVideo
-} from "./supabase.js";
+} from "./supabase.js?v=2";
 
 let selectedStationId = "";
 let visibleVideos = [];
+let sectionCatalogError = "";
 
 function currentStation() {
   if (selectedStationId === GLOBAL_VIDEO_SECTION_ID) return null;
@@ -60,6 +63,10 @@ function updateAdminControls() {
   const signedIn = hasAdminSession();
   $("#media-login-form").hidden = signedIn;
   $("#media-logout").hidden = !signedIn;
+  $("#media-add-section").disabled = !signedIn;
+  $("#media-section-status").textContent = sectionCatalogError || (signedIn
+    ? "Las secciones nuevas se compartirán con las tablets conectadas."
+    : "Inicia sesión para añadir secciones o gestionar vídeos.");
   const isGlobalVideo = selectedStationId === GLOBAL_VIDEO_SECTION_ID;
   $("#media-upload-files").disabled = !signedIn || (isGlobalVideo && visibleVideos.length > 0);
   $("#media-upload-files").multiple = !isGlobalVideo;
@@ -74,6 +81,65 @@ function updateAdminControls() {
     ? `Se reproduce en bucle mientras no se detecta presencia. Para cambiarlo, elimina el actual y sube otro. MP4, WebM u Ogg · máximo ${Math.round(MAX_VIDEO_BYTES / (1024 * 1024))} MB.`
     : `Elige uno o varios archivos. MP4, WebM u Ogg · máximo ${Math.round(MAX_VIDEO_BYTES / (1024 * 1024))} MB por vídeo.`;
   renderVideoList(visibleVideos);
+}
+
+function renderMediaStationOptions(select) {
+  const selected = selectedStationId;
+  select.innerHTML = [...appState.stations.values()]
+    .map(station => `<option value="${escapeHTML(station.id)}">${escapeHTML(station.name)}</option>`)
+    .join("") + `<option value="${GLOBAL_VIDEO_SECTION_ID}">Vídeo de espera · todas las secciones</option>`;
+  select.value = [...select.options].some(option => option.value === selected)
+    ? selected
+    : select.options[0]?.value || "";
+  selectedStationId = select.value;
+}
+
+function newSectionId(name) {
+  const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return `section-${slug || "nueva"}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+async function handleCreateSection(event, select) {
+  event.preventDefault();
+  const input = $("#media-section-name");
+  const button = $("#media-section-submit");
+  const name = input.value.trim();
+  if (!name || name.length > 48) {
+    $("#media-section-status").textContent = "Escribe un nombre de hasta 48 caracteres.";
+    input.focus();
+    return;
+  }
+  if ([...appState.stations.values()].some(station => station.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+    $("#media-section-status").textContent = "Ya existe una sección con ese nombre.";
+    input.focus();
+    return;
+  }
+  button.disabled = true;
+  $("#media-section-status").textContent = "Creando sección compartida…";
+  try {
+    const section = await createVideoSection({ id: newSectionId(name), name });
+    sectionCatalogError = "";
+    const station = {
+      ...createRemoteStation(section),
+      state: "idle"
+    };
+    appState.stations.set(station.id, station);
+    renderConfigs();
+    renderDevices();
+    window.dispatchEvent(new CustomEvent("beautytech:sections-changed"));
+    selectedStationId = station.id;
+    renderMediaStationOptions(select);
+    $("#media-create-section-form").hidden = true;
+    input.value = "";
+    updateAdminControls();
+    await loadSelectedVideos();
+    $("#media-section-status").textContent = `Sección «${station.name}» creada y compartida con las tablets.`;
+  } catch (error) {
+    $("#media-section-status").textContent = `No se pudo crear la sección: ${error.message}`;
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function loadSelectedVideos() {
@@ -182,12 +248,11 @@ async function handleDeleteVideo(videoId) {
   }
 }
 
-export function initializeMediaControls() {
+export function initializeMediaControls({ sectionLoadError = "" } = {}) {
   const select = $("#media-station");
   if (!select) return;
-  select.innerHTML = [...appState.stations.values()]
-    .map(station => `<option value="${escapeHTML(station.id)}">${escapeHTML(station.name)}</option>`)
-    .join("") + `<option value="${GLOBAL_VIDEO_SECTION_ID}">Vídeo de espera · todas las secciones</option>`;
+  sectionCatalogError = sectionLoadError;
+  renderMediaStationOptions(select);
   selectedStationId = select.value;
   $("#media-slots").innerHTML = `
     <form id="media-login-form" class="media-admin-login">
@@ -207,6 +272,17 @@ export function initializeMediaControls() {
       <button id="media-login" class="button button-secondary" type="submit">Iniciar sesión</button>
     </form>
     <button id="media-logout" class="button button-quiet" type="button" hidden>Cerrar sesión</button>
+    <div class="media-section-manager">
+      <button id="media-add-section" class="button button-secondary" type="button" disabled>Añadir sección</button>
+      <form id="media-create-section-form" class="media-create-section" hidden>
+        <label for="media-section-name">Nombre de la nueva sección
+          <input id="media-section-name" type="text" maxlength="48" autocomplete="off" required>
+        </label>
+        <button id="media-section-submit" class="button button-primary" type="submit">Crear sección</button>
+        <button id="media-section-cancel" class="button button-quiet" type="button">Cancelar</button>
+      </form>
+      <p id="media-section-status" class="media-section-status" role="status" aria-live="polite"></p>
+    </div>
     <label id="media-upload" class="media-upload is-disabled" for="media-upload-files">
       <strong id="media-upload-title">Añadir vídeos a esta sección</strong>
       <span id="media-upload-copy">Elige uno o varios archivos. MP4, WebM u Ogg · máximo ${Math.round(MAX_VIDEO_BYTES / (1024 * 1024))} MB por vídeo.</span>
@@ -215,6 +291,15 @@ export function initializeMediaControls() {
     <div id="media-list" class="server-video-list" aria-live="polite"></div>`;
   updateAdminControls();
   $("#media-login-form").addEventListener("submit", event => void handleSignIn(event));
+  $("#media-add-section").addEventListener("click", () => {
+    $("#media-create-section-form").hidden = false;
+    $("#media-section-name").focus();
+  });
+  $("#media-create-section-form").addEventListener("submit", event => void handleCreateSection(event, select));
+  $("#media-section-cancel").addEventListener("click", () => {
+    $("#media-create-section-form").hidden = true;
+    $("#media-section-name").value = "";
+  });
   $("#media-password-toggle").addEventListener("click", event => {
     const button = event.currentTarget;
     const password = $("#media-admin-password");
@@ -229,6 +314,14 @@ export function initializeMediaControls() {
   $("#media-logout").addEventListener("click", () => void handleSignOut());
   select.addEventListener("change", () => {
     selectedStationId = select.value;
+    visibleVideos = [];
+    updateAdminControls();
+    void loadSelectedVideos();
+  });
+  window.addEventListener("beautytech:sections-changed", () => {
+    const previousStation = selectedStationId;
+    renderMediaStationOptions(select);
+    if (selectedStationId === previousStation) return;
     visibleVideos = [];
     updateAdminControls();
     void loadSelectedVideos();

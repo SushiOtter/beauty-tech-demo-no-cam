@@ -3,6 +3,7 @@ import { $, escapeHTML } from "./utils.js";
 
 const STORAGE_KEY = "beauty-tech-retail-config-v1";
 const editableFields = ["name", "family", "campaign", "copy", "contentType", "dwellMs", "cooldownMs", "enabled"];
+const ageRanges = ["18-29", "30-44", "45-59", "60+", "all"];
 
 const iconShapes = {
  apparatology: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
@@ -15,6 +16,39 @@ const iconShapes = {
 export function iconSVG(name) {
  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconShapes[name] || iconShapes.newness}</svg>`;
 }
+
+export function createRemoteStation(section) {
+ const name = String(section?.name || "").trim();
+ if (!/^[a-z0-9-]+$/.test(section?.id || "") || !name || name.length > 48) {
+  throw new Error("La sección compartida tiene un identificador o nombre no válido.");
+ }
+ const ageContent = Object.fromEntries(ageRanges.map(range => [range, {
+  headline: `Descubre ${name}`,
+  copy: "Acércate para ver los vídeos de esta sección.",
+  tags: []
+ }]));
+ return {
+  id: section.id,
+  name,
+  icon: "newness",
+  family: name,
+  campaign: "Selección editorial",
+  headline: `Descubre ${name}`,
+  copy: "Acércate para ver los vídeos de esta sección.",
+  tags: [],
+  tint: "#e7ddd0",
+  deep: "#8b7259",
+  posterByAge: {},
+  ageContent,
+  clips: [],
+  contentType: "Campaña",
+  dwellMs: 1800,
+  cooldownMs: 8000,
+  enabled: true,
+  remoteSection: true
+ };
+}
+
 export async function loadConfiguration() {
  const response = await fetch("./data/contenido.json?v=37");
  if (!response.ok) throw new Error("No se ha podido cargar data/contenido.json");
@@ -72,10 +106,12 @@ export function clearSavedConfiguration() {
 
 export function renderConfigs() {
  const host = $("#station-configs");
+ const count = $("#section-count");
+ if (count) count.textContent = String(appState.stations.size).padStart(2, "0");
  host.innerHTML = [...appState.stations.values()].map((station, index) => `
   <article class="config-card" style="--card-tint:${station.tint};--card-deep:${station.deep}">
-   <div class="config-card-head"><span class="config-icon">${iconSVG(station.icon)}</span><div><span class="station-number">ESTACIÓN 0${index+1}</span><h3>${escapeHTML(station.name)}</h3></div></div>
-  <label for="name-${station.id}">Nombre de estación</label><input id="name-${station.id}" data-config="name" data-id="${station.id}" value="${escapeHTML(station.name)}" maxlength="48">
+   <div class="config-card-head"><span class="config-icon">${iconSVG(station.icon)}</span><div><span class="station-number">${station.remoteSection ? "SECCIÓN" : "ESTACIÓN"} ${String(index + 1).padStart(2, "0")}</span><h3>${escapeHTML(station.name)}</h3></div></div>
+  <label for="name-${station.id}">${station.remoteSection ? "Nombre de sección compartido" : "Nombre de estación"}</label><input id="name-${station.id}" data-config="name" data-id="${station.id}" value="${escapeHTML(station.name)}" maxlength="48" ${station.remoteSection ? "disabled" : ""}>
   <label for="copy-${station.id}">Descripción</label><textarea id="copy-${station.id}" data-config="copy" data-id="${station.id}" maxlength="120" rows="2">${escapeHTML(station.copy)}</textarea>
    <label for="family-${station.id}">Familia comercial</label>
    <select id="family-${station.id}" data-config="family" data-id="${station.id}">

@@ -1,7 +1,7 @@
 import { appState } from "./state.js";
 import { $ } from "./utils.js";
-import { startCamera, stopCamera } from "./camera.js?v=36";
-import { listVideos } from "./supabase.js";
+import { startCamera, stopCamera } from "./camera.js?v=37";
+import { listVideos } from "./supabase.js?v=2";
 import { GLOBAL_VIDEO_SECTION_ID } from "./supabase-config.js?v=38";
 
 let activeStationId = "";

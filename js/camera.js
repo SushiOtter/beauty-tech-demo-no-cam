@@ -65,17 +65,22 @@ function buildZoneSelectors() {
   const options = stations.map(station => `<option value="${station.id}">${escapeHTML(station.name)}</option>`).join("");
   const cameraStation = $("#camera-station");
   if (cameraStation) {
+    const hadOptions = cameraStation.options.length > 0;
+    const previousStation = cameraStation.value;
     cameraStation.innerHTML = `${options}<option value="">Usar asignación por zonas</option>`;
     let savedStation = "";
     try { savedStation = localStorage.getItem(STATION_STORAGE_KEY) || ""; }
     catch (error) { console.warn("No se pudo recuperar la sección de cámara.", error); }
-    cameraStation.value = stations.some(station => station.id === savedStation && station.enabled)
+    const preferredStation = stations.some(station => station.id === savedStation && station.enabled)
       ? savedStation
-      : stations.find(station => station.enabled)?.id || "";
-    cameraStation.addEventListener("change", () => {
+      : hadOptions && previousStation === ""
+        ? ""
+        : stations.find(station => station.enabled)?.id || "";
+    cameraStation.value = preferredStation;
+    cameraStation.onchange = () => {
       try { localStorage.setItem(STATION_STORAGE_KEY, cameraStation.value); }
       catch (error) { console.error("No se pudo guardar la sección de cámara:", error); status("No se pudo guardar la sección seleccionada."); }
-    });
+    };
   }
   root.innerHTML = Array.from({ length: ZONE_COUNT }, (_, index) => `
     <label class="zone-select" for="camera-zone-${index}">Zona ${index + 1}
@@ -93,12 +98,15 @@ function buildZoneSelectors() {
   }
   root.querySelectorAll("select[data-zone]").forEach((select, index) => {
     select.value = zoneAssignments[index];
-    select.addEventListener("change", () => {
+    select.onchange = () => {
       zoneAssignments[index] = select.value;
       try { localStorage.setItem(ZONE_STORAGE_KEY, JSON.stringify(zoneAssignments)); }
       catch (error) { console.error("No se pudieron guardar las zonas de cámara:", error); status("No se pudo guardar la asignación de zonas en este navegador."); }
-    });
+    };
   });
+}
+export function refreshStationSelectors() {
+  buildZoneSelectors();
 }
 export function initializeCameraControls() {
   buildZoneSelectors();

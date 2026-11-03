@@ -2,8 +2,8 @@ import { appState } from "./state.js";
 import { $, announce, escapeHTML } from "./utils.js";
 import { renderDevices } from "./panels.js?v=33";
 import { emitEvent, resetStation, resetStations } from "./events.js?v=33";
-import { initializeCameraControls, resetCameraPreferences, startCamera, stopCamera } from "./camera.js?v=35";
-import { clearSavedConfiguration, loadConfiguration, renderConfigs, saveConfiguration } from "./configuration.js?v=34";
+import { initializeCameraControls, refreshStationSelectors, resetCameraPreferences, startCamera, stopCamera } from "./camera.js?v=37";
+import { clearSavedConfiguration, loadConfiguration, renderConfigs, saveConfiguration } from "./configuration.js?v=35";
 import { ageProfiles, getAgeProfile, getStationRecommendations } from "./products.js?v=33";
 
 let guidedTimer = null;
@@ -36,7 +36,7 @@ function renderWorkerStationCards(stations) {
  if (!host) return;
  host.innerHTML = stations.map((station, index) => `
   <button class="worker-station-card" type="button" data-worker-station="${escapeHTML(station.id)}" aria-pressed="false">
-   <img src="${escapeHTML(station.posterByAge.all)}" alt="" loading="${index < 3 ? "eager" : "lazy"}">
+   ${station.posterByAge?.all ? `<img src="${escapeHTML(station.posterByAge.all)}" alt="" loading="${index < 3 ? "eager" : "lazy"}">` : ""}
    <span class="worker-station-shade"></span>
    <span class="worker-station-index">0${index + 1} <span>·</span> BEAUTY TECH</span>
    <span class="worker-station-content">
@@ -321,6 +321,10 @@ function startGuidedDemo() {
 export function initializeAdmin() {
  initializeCameraControls();
  syncWorkerStationSelection();
+ window.addEventListener("beautytech:sections-changed", () => {
+  refreshStationSelectors();
+  syncWorkerStationSelection();
+ });
  $("#worker-station")?.addEventListener("change", event => {
    const cameraSelect = $("#camera-station");
    cameraSelect.value = event.target.value;
@@ -455,7 +459,11 @@ export function initializeAdmin() {
   try { localStorage.removeItem(GUIDED_INTERVAL_KEY); } catch (error) { console.warn("No se pudo restablecer la duración de la demo.", error); }
    try {
      const config = await loadConfiguration();
-     appState.stations = new Map(config.stations.map(station => [station.id, { ...station, enabled: true, state: "idle" }]));
+     const remoteStations = [...appState.stations.values()].filter(station => station.remoteSection);
+     appState.stations = new Map([
+       ...config.stations.map(station => [station.id, { ...station, enabled: true, state: "idle" }]),
+       ...remoteStations.map(station => [station.id, { ...station, state: station.enabled ? "idle" : "disabled" }])
+     ]);
      renderConfigs();
      syncWorkerStationSelection();
      renderDevices();
