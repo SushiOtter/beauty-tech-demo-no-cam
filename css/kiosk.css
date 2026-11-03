@@ -13,6 +13,12 @@
 .media-admin-login label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
 .media-admin-login input { width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.65); color: var(--ink); }
 .media-admin-login button { justify-self: start; }
+.media-password-control { position: relative; display: block; }
+.media-password-control input { padding-right: 42px; }
+.media-admin-login .media-password-toggle { position: absolute; top: 50%; right: 6px; display: grid; width: 30px; height: 30px; place-items: center; padding: 5px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); transform: translateY(-50%); cursor: pointer; }
+.media-password-toggle:hover { background: rgba(0,0,0,.05); color: var(--ink); }
+.media-password-toggle:focus-visible { outline: 2px solid var(--champagne); outline-offset: 1px; }
+.media-password-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .media-upload {
   display: grid;
   gap: 8px;
